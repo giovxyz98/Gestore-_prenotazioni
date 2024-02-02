@@ -1,7 +1,8 @@
 @startuml
 
-class Start {
-}
+skin rose
+
+title GestorePrenotazioni
 
 class StoricoAnnuo {
   - instance: StoricoAnnuo
@@ -14,68 +15,106 @@ class StoricoAnnuo {
 
 class StoricoSettimanale {
   - settimana: int
-  - storicoSettimanale: List<Spettacolo>
-  + stampaSpettacoli(): void
-  + creaStorico(int): void
+  - storicoSettimanale: Map<String, List<Spettacolo>>
   + esisteStorico(int): boolean
-  + addSpettacolo(int, Spettacolo): void
-  + rimuoviSpettacolo(int, Spettacolo): void
+  + creaStorico(int): void
+  + creaStoricoSettimanale(int): StoricoSettimanale
+  - initializzaGiorni(): void
+  + stampaSpettacoliSettimana(): void
+  + stampaSpettacoliDelGiorno(String): void
+  + getSpettacolo(String): Spettacolo
+  + addSpettacolo(int, String, Spettacolo): void
+  + rimuoviSpettacolo(int, String, Spettacolo): void
+  - sonoParametriValidi(int, String, Spettacolo): boolean
+  + getSettimana(): int
+  - getStoricoSettimanale(int): StoricoSettimanale
 }
 
 class Spettacolo {
   - titolo: String
   - codiceSpettacolo: String
+  - tipo: String
   - datetime: LocalDateTime
   - numeroSala: int
-  + Spettacolo(String, String, Sala, int, int, int, int, int)
+  + creaSpettacolo(String, String, String, String, Sala, int, int, int, int, int): Spettacolo
   + stampaDettagli(): void
-}
-class GestoreSale{
- - instance : GestoreSale
- - saleTotali : List<Sala>
- + controllaDisponibilità(Sala) : boolean
- + prenotaSala : void
- + liberaSala : void
-}
-class Sala {
-  - numeroSala: int
-  - occupata : Map<Integer, boolean>
-  - listaPosti: List<Posto>
-  + creaSala(int)
-  - creaPosti(): List<Posto>
+  + getTitolo(): String
+  + getCodiceSpettacolo(): String
+  + getDatetime(): LocalDateTime
+  + getNumeroSala(): int
 }
 
+class Film {
+  - genere: String
+  + getGenere(): String
+}
+
+class Concerto {
+  - artista: String
+  + getArtista(): String
+}
+
+class Opera {
+  - compositore: String
+  + getCompositore(): String
+}
+
+class GestoreSale {
+  - instance: GestoreSale
+  - saleTotali: List<Sala>
+  + getInstance(): GestoreSale
+  - controllaDisponibilita(int, int): boolean
+  + prenotaSala(int, int): void
+  - inizializzaSale(): void
+  + liberaSala(int, int): void
+  + getSala(int): Sala
+}
+
+class Sala {
+  - numeroSala: int
+  - slot: Map<Integer, Boolean>
+  - listaPosti: List<Posto>
+  + Sala(int): void
+  + getPrenotabile(): Posto
+  - inizializzaSlotDisponibili(): Map<Integer, Boolean>
+  + getNumeroSala(): int
+  + getSlot(): Map<Integer, Boolean>
+  + getListaPosti(): List<Posto>
+}
 
 class Posto {
   - fila: char
   - numeroPosto: int
   - prenotato: boolean
-  + Posto(char, int)
+  + Posto(char, int): void
+  + prenota(): boolean
   + isPrenotato(): boolean
+  + libera(): void
   + setPrenotato(boolean): void
+  + getNumeroPosto(): int
+  + getFila(): char
 }
 
-class Prenotazione {
-  - idPrenotazione: String
-  - datetime: LocalTime
-  + Prenotazione(String)
-}
-
-class GestorePrenotazioni {
-  - instance: GestorePrenotazioni
+class Prenotazioni {
+  - instance: Prenotazioni
   - numeroPrenotazioni: int
-  - prenotazioni: List<Prenotazione>
-  + getInstance(): GestorePrenotazioni
+  - prenotazioni: Map<String, Biglietto>
+  + getInstance(): Prenotazioni
   - generaNumeroPrenotazione(): String
   + effettuaPrenotazione(Spettacolo, Posto): void
   + getNumeroPrenotazioni(): int
+  + getPrenotazioni(): Map<String, Biglietto>
+  + getBiglietto(String): Biglietto
 }
 
 class Biglietto {
   - spettacolo: Spettacolo
   - posto: Posto
-  + creaBiglietto(Spettacolo, Posto): Biglietto
-  + stampaBiglietto(LocalTime, String): void
+  - numeroPrenotazione: String
+  - datetime: LocalDateTime
+  + creaBiglietto(Spettacolo, Posto, String): Biglietto
+  + stampaBiglietto(): void
+  + toString(): String
 }
 
 @enduml
