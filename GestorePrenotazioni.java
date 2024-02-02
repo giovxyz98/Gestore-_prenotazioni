@@ -6,16 +6,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap; 
 
- class StoricoAnnuo {
+public class GestorePrenotazioni{
+    public static void main(String[] args){
+
+    }
+}
+class StoricoAnnuo {
     private static StoricoAnnuo instance;
     private List<StoricoSettimanale> storicoAnno;
 
     private StoricoAnnuo() {
         storicoAnno = new ArrayList<>();
     }
-    public List<StoricoSettimanale> getStoricoAnnuo(){
+
+    public List<StoricoSettimanale> getStoricoAnnuo() {
         return storicoAnno;
     }
+
     public static StoricoAnnuo getInstance() {
         if (instance == null) {
             instance = new StoricoAnnuo();
@@ -23,8 +30,8 @@ import java.util.HashMap;
         return instance;
     }
 
-    public void aggiungiAlloStorico(StoricoSettimanale StoricoSettimanale) {
-        storicoAnno.add(StoricoSettimanale);
+    public void aggiungiAlloStorico(StoricoSettimanale storicoSettimanale) {
+        storicoAnno.add(storicoSettimanale);
     }
 
     public void elencaSpettacoli() {
@@ -32,67 +39,74 @@ import java.util.HashMap;
             settimana.stampaSpettacoli();
         }
     }
-
-
 }
 
 class StoricoSettimanale {
-    protected int settimana;
-    protected List<Spettacolo> storicoSettimanale;
+    private int settimana;
+    private List<Spettacolo> storicoSettimanale;
 
     private StoricoSettimanale(int settimana) {
         this.settimana = settimana;
         this.storicoSettimanale = new ArrayList<>();
-
     }
 
     public void stampaSpettacoli() {
-        System.out.println("Spettacoli della settimana"+settimana+":\n");
+        System.out.println("Spettacoli della settimana " + settimana + ":\n");
         for (Spettacolo spettacolo : storicoSettimanale) {
             spettacolo.stampaDettagli();
         }
     }
 
-    public void creaStorico(int settimana){
-        if(!esisteStorico(settimana)){
-            StoricoSettimanale storicoSettimanale = new StoricoSettimanale(settimana);
-            StoricoAnnuo.getInstance().getStoricoAnnuo().add(storicoSettimanale);
+    private void creaStorico(int settimana) {
+        if (!esisteStorico(settimana)) {
+            StoricoSettimanale nuovoStorico = new StoricoSettimanale(settimana);
+            StoricoAnnuo.getInstance().getStoricoAnnuo().add(nuovoStorico);
             System.out.println("\nCreato nuovo storico settimanale e aggiunto allo storico annuo\n");
         }
     }
+
     public boolean esisteStorico(int settimana) {
-        for(StoricoSettimanale storico : StoricoAnnuo.getInstance().getStoricoAnnuo()){
-            if(storico.settimana == settimana){
+        for (StoricoSettimanale storico : StoricoAnnuo.getInstance().getStoricoAnnuo()) {
+            if (storico.settimana == settimana) {
                 return true;
             }
-        };
+        }
         return false;
     }
-    public void addSpettacolo(int settimana, Spettacolo spettacolo) {
-    if (!esisteStorico(settimana)) {
-        creaStorico(settimana);}
-    StoricoAnnuo.getInstance().getStoricoAnnuo().get(settimana).storicoSettimanale.add(spettacolo);
 
-}
+    public void addSpettacolo(int settimana, Spettacolo spettacolo) {
+        if (!esisteStorico(settimana)) {
+            creaStorico(settimana);
+        }
+        StoricoAnnuo.getInstance().getStoricoAnnuo().get(settimana).storicoSettimanale.add(spettacolo);
+    }
+
     public void rimuoviSpettacolo(int settimana, Spettacolo spettacolo) {
         if (!esisteStorico(settimana)) {
             System.out.println("\nSettimana non esistente\n");
-        }
-        else {
+        } else {
             StoricoAnnuo.getInstance().getStoricoAnnuo().get(settimana).storicoSettimanale.remove(spettacolo);
         }
     }
+
+    public int getSettimana() {
+        return settimana;
+    }
+
+    public List<Spettacolo> getStoricoSettimanale() {
+        return storicoSettimanale;
+    }
 }
 
- class Spettacolo {
-    String titolo, codiceSpettacolo;
-    LocalDateTime datetime;
-    int numeroSala;
+class Spettacolo {
+    private String titolo, codiceSpettacolo;
+    private LocalDateTime datetime;
+    private int numeroSala;
 
     public Spettacolo(String titolo, String codiceSpettacolo, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
         this.titolo = titolo;
         this.codiceSpettacolo = codiceSpettacolo;
-        this.numeroSala = sala.numeroSala;
+        this.numeroSala = sala.getNumeroSala();
         this.datetime = LocalDateTime.of(anno, mese, giorno, ore, minuti);
     }
 
@@ -102,97 +116,140 @@ class StoricoSettimanale {
         System.out.println("Numero Sala: " + this.numeroSala);
         System.out.println("Orario: " + this.datetime);
     }
+
+    public String getTitolo() {
+        return titolo;
+    }
+
+    public String getCodiceSpettacolo() {
+        return codiceSpettacolo;
+    }
+
+    public LocalDateTime getDatetime() {
+        return datetime;
+    }
+
+    public int getNumeroSala() {
+        return numeroSala;
+    }
 }
 
-class GestoreSale{
+class GestoreSale {
     private static GestoreSale instance;
     private List<Sala> saleTotali;
-    private GestoreSale(){
-    saleTotali = new ArrayList<>();
+    private boolean saleInizializzate = false;
+
+    private GestoreSale() {
+        saleTotali = new ArrayList<>();
+        inizializzaSale();
+        
     }
-    public static GestoreSale getInstance(){
+
+    public static GestoreSale getInstance() {
         if (instance == null) {
             instance = new GestoreSale();
         }
         return instance;
     }
-    private boolean controllaDisponibilità(int numeroSala, int slot){
+
+    private boolean controllaDisponibilita(int numeroSala, int slot) {
         Sala sala = getSala(numeroSala);
-        if(sala != null && sala.slot.containsKey(slot)){
-            return sala.slot.get(slot);
-        }
-        else return false;
+        return sala != null && sala.getSlot().containsKey(slot) && sala.getSlot().get(slot);
     }
 
-    public void prenotaSala(int numeroSala, int slot){
-        if(!controllaDisponibilità(numeroSala, slot)){
+    public void prenotaSala(int numeroSala, int slot) {
+        if (!controllaDisponibilita(numeroSala, slot)) {
             System.out.println("Sala non prenotabile");
-        }
-        else{
+        } else {
             Sala sala = getSala(numeroSala);
-            if (sala != null && sala.slot.containsKey(slot)) {
-                sala.slot.put(slot, true);
+            if (sala != null && sala.getSlot().containsKey(slot)) {
+                sala.getSlot().put(slot, true);
                 System.out.println("Sala " + numeroSala + ", slot " + slot + " prenotato con successo.");
             } else {
                 System.out.println("Errore nella prenotazione della sala.");
-
             }
         }
     }
+    private void inizializzaSale() {
+        if(saleInizializzate == false){
+            for (int numeroSala = 1; numeroSala <= 6; numeroSala++) {
+                Sala sala = new Sala(numeroSala);
+                saleTotali.add(sala);
+                saleInizializzate = true;
+            }
+        }
+    }
+
     public void liberaSala(int numeroSala, int slot) {
         Sala sala = getSala(numeroSala);
 
-        if (sala != null && sala.slot.containsKey(slot)) {
-            sala.slot.put(slot, false);
+        if (sala != null && sala.getSlot().containsKey(slot)) {
+            sala.getSlot().put(slot, false);
             System.out.println("Sala " + numeroSala + ", slot " + slot + " liberato con successo.");
         } else {
             System.out.println("Errore nella liberazione della sala o dello slot.");
         }
     }
-    private Sala getSala(int numeroSala){
-        for(Sala sala : saleTotali){
-            if(sala.numeroSala == numeroSala){
+
+    private Sala getSala(int numeroSala) {
+        for (Sala sala : saleTotali) {
+            if (sala.getNumeroSala() == numeroSala) {
                 return sala;
             }
-        } return null;
+        }
+        return null;
     }
+    
+
 }
 
 class Sala {
-    int numeroSala;
-    Map<Integer, Boolean> slot;
-    List<Posto> listaPosti;
+    private int numeroSala;
+    private Map<Integer, Boolean> slot;
+    private List<Posto> listaPosti;
 
-    private Sala(int numeroSala) {
+    protected Sala(int numeroSala) {
+
         this.numeroSala = numeroSala;
-        this.listaPosti = creaPosti(); 
+        this.listaPosti = creaPosti();
         this.slot = inizializzaSlotDisponibili();
-
     }
+  
     private Map<Integer, Boolean> inizializzaSlotDisponibili() {
-        Map<Integer, Boolean> slotMap = new HashMap<>();
+        Map<Integer, Boolean> slotDisponibili = new HashMap<>();
         for (int i = 1; i <= 4; i++) {
-            slotMap.put(i, false);
+            slotDisponibili.put(i, false);
         }
-        return slotMap;
+        return slotDisponibili;
     }
 
     private List<Posto> creaPosti() {
         List<Posto> posti = new ArrayList<>();
-        for (char fila = 'A'; fila <= 'Z'; fila++) {
-            for (int numeroPosto = 1; numeroPosto <= 10; numeroPosto++) {
+        for (char fila = 'A'; fila <= 'G'; fila++) {
+            for (int numeroPosto = 1; numeroPosto <= 15; numeroPosto++) {
                 posti.add(new Posto(fila, numeroPosto));
             }
         }
         return posti;
     }
 
+    public int getNumeroSala() {
+        return numeroSala;
+    }
+
+    public Map<Integer, Boolean> getSlot() {
+        return slot;
+    }
+
+    public List<Posto> getListaPosti() {
+        return listaPosti;
+    }
 }
 
 class Posto {
-    char fila;
-    int numeroPosto;
-    boolean prenotato;
+    private char fila;
+    private int numeroPosto;
+    private boolean prenotato;
 
     public Posto(char fila, int numeroPosto) {
         this.fila = fila;
@@ -207,31 +264,46 @@ class Posto {
     public void setPrenotato(boolean prenotato) {
         this.prenotato = prenotato;
     }
+    public int getNumeroPosto(){
+        return numeroPosto;
+    }
+    public char getFila(){
+        return fila;
+    }
+
 }
 
-class Prenotazione{
-    String idPrenotazione;
-    LocalTime datetime;
-    Prenotazione(String idPrenotazione){
+class Prenotazione {
+    private String idPrenotazione;
+    private LocalTime datetime;
+
+    Prenotazione(String idPrenotazione) {
         this.idPrenotazione = idPrenotazione;
         datetime = LocalTime.now();
+    }
 
+    public String getIdPrenotazione() {
+        return idPrenotazione;
+    }
+
+    public LocalTime getDatetime() {
+        return datetime;
     }
 }
 
-class GestorePrenotazioni {
-    private static GestorePrenotazioni instance;
+class Gestore{
+    private static Gestore instance;
     private int numeroPrenotazioni;
     private List<Prenotazione> prenotazioni;
 
-    private GestorePrenotazioni() {
+    private Gestore() {
         numeroPrenotazioni = 0;
         prenotazioni = new ArrayList<>();
     }
 
-    public static GestorePrenotazioni getInstance() {
+    public static Gestore getInstance() {
         if (instance == null) {
-            instance = new GestorePrenotazioni();
+            instance = new Gestore();
         }
         return instance;
     }
@@ -239,23 +311,22 @@ class GestorePrenotazioni {
     private static String generaNumeroPrenotazione() {
         Random random = new Random();
         int numeroCasuale = 100000 + random.nextInt(900000);
-        String numeroPrenotazione = "P" + numeroCasuale;
-        return numeroPrenotazione;
+        return "P" + numeroCasuale;
     }
+
     public void effettuaPrenotazione(Spettacolo spettacolo, Posto posto) {
-        if (!posto.prenotato){
-        Prenotazione prenotazione = new Prenotazione(generaNumeroPrenotazione());
-        prenotazioni.add(prenotazione);
-        numeroPrenotazioni++;
-        posto.setPrenotato(true);
-        Biglietto biglietto = Biglietto.creaBiglietto(spettacolo, posto);
-        biglietto.stampaBiglietto(prenotazione.datetime, prenotazione.idPrenotazione);
-        System.out.println("Prenotazione effettuata con successo.");
+        if (!posto.isPrenotato()) {
+            Prenotazione prenotazione = new Prenotazione(generaNumeroPrenotazione());
+            prenotazioni.add(prenotazione);
+            numeroPrenotazioni++;
+            posto.setPrenotato(true);
+            Biglietto biglietto = Biglietto.creaBiglietto(spettacolo, posto);
+            biglietto.stampaBiglietto(prenotazione.getDatetime(), prenotazione.getIdPrenotazione());
+            System.out.println("Prenotazione effettuata con successo.");
         } else {
             System.out.println("Il posto è già prenotato. Scegli un altro posto.");
         }
     }
-
 
     public int getNumeroPrenotazioni() {
         return numeroPrenotazioni;
@@ -263,16 +334,21 @@ class GestorePrenotazioni {
 }
 
 class Biglietto {
-    Spettacolo spettacolo;
-    Posto posto;
+    private Spettacolo spettacolo;
+    private Posto posto;
+
     private Biglietto(Spettacolo spettacolo, Posto posto) {
-        this.spettacolo= spettacolo;
+        this.spettacolo = spettacolo;
         this.posto = posto;
     }
+
     public static Biglietto creaBiglietto(Spettacolo spettacolo, Posto posto) {
         return new Biglietto(spettacolo, posto);
     }
-    public void stampaBiglietto(LocalTime ora, String numeroPrenotazione ){
-        System.out.println("Ora prenotazione: "+ ora+"\nNumero Prenotazione: "+ numeroPrenotazione + "\nNumero posto: " + posto.numeroPosto+"\nSpettacolo: \n"+ spettacolo.titolo+"\n"+spettacolo.codiceSpettacolo+"\n"+spettacolo);
+
+    public void stampaBiglietto(LocalTime ora, String numeroPrenotazione) {
+        System.out.println("Ora prenotazione: " + ora + "\nNumero Prenotazione: " + numeroPrenotazione +
+                "\nNumero posto: " + posto.getNumeroPosto()+posto.getFila() + "\nSpettacolo: \n" + spettacolo.getTitolo() +
+                "\n" + spettacolo.getCodiceSpettacolo() + "\n" + spettacolo.getDatetime());
     }
 }
