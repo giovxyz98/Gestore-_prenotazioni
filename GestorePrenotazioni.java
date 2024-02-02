@@ -7,10 +7,11 @@ import java.util.ArrayList;
 import java.util.HashMap; 
 
 public class GestorePrenotazioni{
-    public static void main(String[] args){
+        public static void main(String[] args) {
 
+        }
     }
-}
+
 class StoricoAnnuo {
     private static StoricoAnnuo instance;
     private List<StoricoSettimanale> storicoAnno;
@@ -18,11 +19,9 @@ class StoricoAnnuo {
     private StoricoAnnuo() {
         storicoAnno = new ArrayList<>();
     }
-
-    public List<StoricoSettimanale> getStoricoAnnuo() {
+    public List<StoricoSettimanale> getStoricoAnnuo(){
         return storicoAnno;
     }
-
     public static StoricoAnnuo getInstance() {
         if (instance == null) {
             instance = new StoricoAnnuo();
@@ -30,8 +29,8 @@ class StoricoAnnuo {
         return instance;
     }
 
-    public void aggiungiAlloStorico(StoricoSettimanale storicoSettimanale) {
-        storicoAnno.add(storicoSettimanale);
+    public void aggiungiAlloStorico(StoricoSettimanale StoricoSettimanale) {
+        storicoAnno.add(StoricoSettimanale);
     }
 
     public void elencaSpettacoli() {
@@ -39,7 +38,10 @@ class StoricoAnnuo {
             settimana.stampaSpettacoli();
         }
     }
+
+    
 }
+
 
 class StoricoSettimanale {
     private int settimana;
@@ -56,8 +58,19 @@ class StoricoSettimanale {
             spettacolo.stampaDettagli();
         }
     }
-
+    public Spettacolo getSpettacolo(String codiceSpettacolo) {
+        for (Spettacolo spettacolo : storicoSettimanale) {
+            if (spettacolo.getCodiceSpettacolo().equals(codiceSpettacolo)) {
+                return spettacolo;
+            }
+        }
+        return null;
+    }
     private void creaStorico(int settimana) {
+        if (settimana < 1 || settimana > 52) {
+            System.out.println("\nNumero settimana non valido. Deve essere compreso tra 1 e 52.\n");
+            return;
+        }
         if (!esisteStorico(settimana)) {
             StoricoSettimanale nuovoStorico = new StoricoSettimanale(settimana);
             StoricoAnnuo.getInstance().getStoricoAnnuo().add(nuovoStorico);
@@ -99,22 +112,36 @@ class StoricoSettimanale {
 }
 
 class Spettacolo {
-    private String titolo, codiceSpettacolo;
+    private String titolo, codiceSpettacolo, tipo;
     private LocalDateTime datetime;
     private int numeroSala;
 
-    public Spettacolo(String titolo, String codiceSpettacolo, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
+    protected Spettacolo(String titolo, String codiceSpettacolo, String tipo, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
         this.titolo = titolo;
         this.codiceSpettacolo = codiceSpettacolo;
+        this.tipo = tipo;
         this.numeroSala = sala.getNumeroSala();
         this.datetime = LocalDateTime.of(anno, mese, giorno, ore, minuti);
     }
 
+    public static Spettacolo creaSpettacolo(String titolo, String codiceSpettacolo, String tipo, String dettaglio, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
+        switch (tipo.toLowerCase()) {
+            case "film":
+                return new Film(titolo, codiceSpettacolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
+            case "concerto":
+                return new Concerto(titolo, codiceSpettacolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
+            case "opera":
+                return new Opera(titolo, codiceSpettacolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
+            default:
+                throw new IllegalArgumentException("Tipo di spettacolo non valido");
+        }
+    }
     public void stampaDettagli() {
+        System.out.println(this.tipo);
         System.out.println("Titolo: " + this.titolo);
         System.out.println("Codice Spettacolo: " + this.codiceSpettacolo);
         System.out.println("Numero Sala: " + this.numeroSala);
-        System.out.println("Orario: " + this.datetime);
+        System.out.println("Data e Orario: " + this.datetime);
     }
 
     public String getTitolo() {
@@ -131,6 +158,44 @@ class Spettacolo {
 
     public int getNumeroSala() {
         return numeroSala;
+    }
+    
+}
+class Film extends Spettacolo {
+    private String genere;
+
+    public Film(String titolo, String codiceSpettacolo,String tipo, String genere, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
+        super(titolo, codiceSpettacolo,tipo, sala, anno, mese, giorno, ore, minuti);
+        this.genere = genere;
+    }
+    public String getGenere(){
+        return genere;
+    }
+
+}
+
+class Concerto extends Spettacolo {
+    private String artista;
+
+    public Concerto(String titolo, String codiceSpettacolo,String tipo, String artista, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
+        super(titolo, codiceSpettacolo,tipo,sala, anno, mese, giorno, ore, minuti);
+        this.artista = artista;
+    }
+    public String getArtista(){
+        return artista;
+    }
+
+}
+
+class Opera extends Spettacolo {
+    private String compositore;
+
+    public Opera(String titolo, String codiceSpettacolo, String tipo, String compositore, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
+        super(titolo, codiceSpettacolo, tipo, sala, anno, mese, giorno, ore, minuti);
+        this.compositore = compositore;
+    }
+    public String getCompositore(){
+        return compositore;
     }
 }
 
@@ -191,7 +256,7 @@ class GestoreSale {
         }
     }
 
-    private Sala getSala(int numeroSala) {
+    public Sala getSala(int numeroSala) {
         for (Sala sala : saleTotali) {
             if (sala.getNumeroSala() == numeroSala) {
                 return sala;
@@ -331,6 +396,10 @@ class Gestore{
     public int getNumeroPrenotazioni() {
         return numeroPrenotazioni;
     }
+    public List<Prenotazione> getPrenotazioni() {
+        return prenotazioni;
+    }
+
 }
 
 class Biglietto {
