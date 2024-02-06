@@ -12,10 +12,35 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.util.LinkedHashMap;
+
 
 public class GestorePrenotazioni{
         public static void main(String[] args) {
-        
+
+            GestoreSale gestoreSale = GestoreSale.getInstance();
+            Storico storico = Storico.getInstance();
+            storico.creaStoricoAnnuo(storico.getAnnoCorrente());
+            Prenotazioni prenotazioni = Prenotazioni.getInstance();
+   
+            Sala sala1 = gestoreSale.creaSala(1);
+            Sala sala2 = gestoreSale.creaSala(2);
+            Sala sala3 = gestoreSale.creaSala(3);
+            System.out.println();
+            Spettacolo interstellar = storico.aggiungiNuovoSpettacolo("Interstellar", "film", "Fantascienza", sala1, 2024, 2, 14, 18, 30);
+            Spettacolo titanic = storico.aggiungiNuovoSpettacolo("Titanic", "film", "Azione", sala2, 2024, 2, 15, 20, 0);
+            Spettacolo il_padrino = storico.aggiungiNuovoSpettacolo("Il padrino", "film", "Musical", sala3, 2024, 2, 16, 15, 0);
+            System.out.println();
+            prenotazioni.effettuaPrenotazione(il_padrino, gestoreSale.getSala(il_padrino.getNumeroSala()).getPrenotabile());
+            prenotazioni.effettuaPrenotazione(titanic, gestoreSale.getSala(titanic.getNumeroSala()).getPrenotabile());
+            prenotazioni.effettuaPrenotazione(interstellar, gestoreSale.getSala(interstellar.getNumeroSala()).getPrenotabile());
+            System.out.println();
+            storico.getStoricoAnnuo(storico.getAnnoCorrente()).getStoricoAnnuo().get(LocalDate.of(2024, 2, 15).get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear())).stampaSpettacoliSettimana();
+            System.out.println("Prenotazioni effettuate:");
+            for (Biglietto biglietto : prenotazioni.getPrenotazioni().values()) {
+                System.out.println("\n"+biglietto.toString()+"\n");
+                
+            }
         }
     }
 
@@ -57,24 +82,46 @@ class Storico{
         }        
     }
 
-    public void creaStoricoSettimanale(int nuovaSettimana){
+    public StoricoSettimana creaStoricoSettimanale(int nuovaSettimana){
         if (nuovaSettimana < 1 || nuovaSettimana > 52) {
             System.out.println("\nNumero settimana non valido. Deve essere compreso tra 1 e 52.\n");
-            return;
+            return null;
         }
+        
         StoricoAnnuo storicoAnnuo = getStoricoAnnuo(getAnnoCorrente());
-        if(storicoAnnuo.getStoricoAnnuo().get(nuovaSettimana).getLista().isEmpty()){
-            StoricoSettimana nuovoStorico = new StoricoSettimana(nuovaSettimana);
-            storicoAnnuo.getStoricoAnnuo().put(nuovaSettimana,nuovoStorico);
-            System.out.println("\nCreato nuovo storico settimanale e aggiunto allo storico annuo\n");
+        if (storicoAnnuo == null) {
+            creaStoricoAnnuo(getAnnoCorrente());
+            storicoAnnuo = getStoricoAnnuo(getAnnoCorrente());
         }
+        Map<Integer, StoricoSettimana> storicoSettimanaleMap = storicoAnnuo.getStoricoAnnuo();
+        if (!storicoSettimanaleMap.containsKey(nuovaSettimana)) {
+            StoricoSettimana nuovoStorico = new StoricoSettimana(nuovaSettimana);
+            storicoSettimanaleMap.put(nuovaSettimana, nuovoStorico);
+            System.out.println("\nCreato nuovo storico settimanale e aggiunto allo storico annuo\n");
+            return nuovoStorico;
+        }
+    
+        return storicoSettimanaleMap.get(nuovaSettimana);
     }
 
     public StoricoSettimana getStoricoSettimanale(int anno, int settimana){
-        Map<Integer,StoricoSettimana> storicoAnnuo = getStoricoAnnuo(anno).getStoricoAnnuo();
-        return storicoAnnuo.get(settimana);
-        
+        StoricoAnnuo storicoAnnuo = getStoricoAnnuo(anno);
+
+        if (storicoAnnuo == null) {
+            System.out.println("Lo storico annuo per l'anno " + anno + " non esiste.");
+            return null;
+        }
+    
+        Map<Integer, StoricoSettimana> storicoAnnuoMap = storicoAnnuo.getStoricoAnnuo();
+    
+        if (!storicoAnnuoMap.containsKey(settimana)) {
+            StoricoSettimana storicoSettimana = creaStoricoSettimanale(settimana);
+            return storicoSettimana;
+        } else {
+            return storicoAnnuoMap.get(settimana);
+        }
     }
+
     public Spettacolo getSpettacolo(String codiceSpettacolo){
         Map<Integer, StoricoSettimana> storicoAnnuo = getStoricoAnnuo(getAnnoCorrente()).getStoricoAnnuo();
         for(StoricoSettimana storicoSettimana : storicoAnnuo.values()){
@@ -89,13 +136,16 @@ class Storico{
         System.out.println("Spettacolo non trovato nel sistema: " + codiceSpettacolo);
         return null;
     }
-    public void aggiungiNuovoSpettacolo(String titolo, String tipo, String dettaglio, Sala sala, int anno, int mese, int giorno, int ore, int minuti){
+    public Spettacolo aggiungiNuovoSpettacolo(String titolo, String tipo, String dettaglio, Sala sala, int anno, int mese, int giorno, int ore, int minuti){
         int settimana = LocalDate.of(anno, mese,giorno).get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
         DayOfWeek giornoSettimana = LocalDate.of(anno, mese, giorno).getDayOfWeek();
-        String giornoDellaSettimana = giornoSettimana.getDisplayName(TextStyle.FULL, Locale.ITALIAN).toLowerCase();
-        Spettacolo spettacolo = Spettacolo.creaSpettacolo(titolo, titolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
-        getStoricoSettimanale(anno, settimana).getLista().get(giornoDellaSettimana).add(spettacolo);
+        String giornoDellaSettimana = giornoSettimana.getDisplayName(TextStyle.SHORT, Locale.ITALIAN);
+        StoricoSettimana storicoSettimanale = getStoricoSettimanale(anno, settimana);
+        Spettacolo spettacolo = Spettacolo.creaSpettacolo(titolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
+        storicoSettimanale.getLista().get(giornoDellaSettimana).add(Spettacolo.creaSpettacolo(titolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti));
         listaIDSpettacoli.add(spettacolo.getCodiceSpettacolo());
+        System.out.println("Aggiunto nuovo spettacolo con codice: "+ spettacolo.getCodiceSpettacolo());
+        return spettacolo;
     }
 }
 
@@ -125,18 +175,18 @@ class StoricoSettimana {
 
     protected StoricoSettimana(int settimana) {
         this.settimana = settimana;
-        this.storicoSettimanale = new HashMap<>();
+        this.storicoSettimanale = new LinkedHashMap<>();
         initializzaGiorni();
     }
 
     private void initializzaGiorni() {
-        storicoSettimanale.put("lunedi", new ArrayList<>());
-        storicoSettimanale.put("martedi", new ArrayList<>());
-        storicoSettimanale.put("mercoledi", new ArrayList<>());
-        storicoSettimanale.put("giovedi", new ArrayList<>());
-        storicoSettimanale.put("venerdi", new ArrayList<>());
-        storicoSettimanale.put("sabato", new ArrayList<>());
-        storicoSettimanale.put("domenica", new ArrayList<>());
+        storicoSettimanale.put("lun", new ArrayList<>());
+        storicoSettimanale.put("mar", new ArrayList<>());
+        storicoSettimanale.put("mer", new ArrayList<>());
+        storicoSettimanale.put("gio", new ArrayList<>());
+        storicoSettimanale.put("ven", new ArrayList<>());
+        storicoSettimanale.put("sab", new ArrayList<>());
+        storicoSettimanale.put("dom", new ArrayList<>());
     }
     
     public void stampaSpettacoliSettimana() {
@@ -144,7 +194,7 @@ class StoricoSettimana {
         for (Map.Entry<String, List<Spettacolo>> entry : storicoSettimanale.entrySet()) {
             String giorno = entry.getKey();
             List<Spettacolo> spettacoliGiorno = entry.getValue();
-    
+            //System.out.println(DayOfWeek.valueOf(giorno.toLowerCase()));
             System.out.println("Giorno: " + giorno);
             for (Spettacolo spettacolo : spettacoliGiorno) {
                 spettacolo.stampaDettagli();
@@ -227,7 +277,7 @@ class Spettacolo {
     private int numeroSala;
 
     protected Spettacolo(String titolo,  String tipo, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
-        if (titolo == null || titolo.isEmpty()  || codiceSpettacolo.isEmpty() || tipo == null || tipo.isEmpty() || sala == null) {
+        if (titolo == null || titolo.isEmpty()  || tipo == null || tipo.isEmpty() || sala == null) {
             throw new IllegalArgumentException("Parametri non validi per la creazione di uno spettacolo.");
         }
     
@@ -242,7 +292,7 @@ class Spettacolo {
         this.datetime = LocalDateTime.of(anno, mese, giorno, ore, minuti);
     }
 
-    public static Spettacolo creaSpettacolo(String titolo, String codiceSpettacolo, String tipo, String dettaglio, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
+    public static Spettacolo creaSpettacolo(String titolo, String tipo, String dettaglio, Sala sala, int anno, int mese, int giorno, int ore, int minuti) {
         switch (tipo.toLowerCase()) {
             case "film":
                 return new Film(titolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
@@ -395,7 +445,12 @@ class GestoreSale {
         }
         return null;
     }
-    
+    public Sala creaSala(int numeroSala){
+        Sala sala = new Sala(numeroSala);
+        saleTotali.add(sala);
+        return sala;
+
+    }
 }
 
 
@@ -420,6 +475,7 @@ class Sala {
         }
         return slotDisponibili;
     }
+
     public Posto getPrenotabile() {
         for (Posto posto : listaPosti) {
             if (!posto.isPrenotato()) {
@@ -429,6 +485,7 @@ class Sala {
         System.out.println("Nessun posto disponibile");
         return null; 
     }
+
     private List<Posto> creaPosti() {
         List<Posto> posti = new ArrayList<>();
         for (char fila = 'A'; fila <= 'G'; fila++) {
@@ -575,14 +632,18 @@ class Biglietto {
     }
 
     public void stampaBiglietto() {
-        System.out.println("Data e ora prenotazione: " + this.datetime.toString() + "\nNumero Prenotazione: " + numeroPrenotazione +
-                "\nNumero posto: " + posto.getNumeroPosto()+posto.getFila() + "\nSpettacolo: \n" + spettacolo.getTitolo() +
-                "\n" + spettacolo.getCodiceSpettacolo() + "\n" + spettacolo.getDatetime().toString());
+        System.out.println( this.toString());
     }
     @Override
     public String toString() {
-        return "Data e ora prenotazione: " + this.datetime.toString() + "\nNumero Prenotazione: " + numeroPrenotazione +
-        "\nNumero posto: " + posto.getNumeroPosto()+posto.getFila() + "\nSpettacolo: \n" + spettacolo.getTitolo() +
-        "\n" + spettacolo.getCodiceSpettacolo() + "\n" + spettacolo.getDatetime().toString();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        String formattedDatetime = this.datetime.format(formatter);
+
+        return "Data e ora prenotazione: " + formattedDatetime +
+                "\nNumero Prenotazione: " + numeroPrenotazione +
+                "\nNumero posto: " + posto.getNumeroPosto() + posto.getFila() +
+                "\nSpettacolo: " + spettacolo.getTitolo() +
+                "\nCodice Spettacolo: " + spettacolo.getCodiceSpettacolo() +
+                "\nData e ora dello spettacolo: " + spettacolo.getDatetime().format(formatter);
     }
 }
