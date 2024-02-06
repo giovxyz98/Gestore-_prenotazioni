@@ -168,6 +168,16 @@ class StoricoAnnuo {
 class StoricoSettimana {
     private int settimana;
     private Map<String, List<Spettacolo>> storicoSettimanale;
+    private final Map<String, String> giorniCompleti = new HashMap<String, String>() {{
+        put("lun", "Lunedì");
+        put("mar", "Martedì");
+        put("mer", "Mercoledì");
+        put("gio", "Giovedì");
+        put("ven", "Venerdì");
+        put("sab", "Sabato");
+        put("dom", "Domenica");
+    }};
+
     
     public Map<String, List<Spettacolo>> getLista(){
         return this.storicoSettimanale;
@@ -189,13 +199,15 @@ class StoricoSettimana {
         storicoSettimanale.put("dom", new ArrayList<>());
     }
     
+    
     public void stampaSpettacoliSettimana() {
         System.out.println("Spettacoli della settimana " + settimana + ":\n");
         for (Map.Entry<String, List<Spettacolo>> entry : storicoSettimanale.entrySet()) {
             String giorno = entry.getKey();
             List<Spettacolo> spettacoliGiorno = entry.getValue();
-            //System.out.println(DayOfWeek.valueOf(giorno.toLowerCase()));
-            System.out.println("Giorno: " + giorno);
+
+            System.out.println("Giorno: " + giorniCompleti.get(giorno));
+            if(spettacoliGiorno.isEmpty()){System.out.println("Non sono presenti spettacoli");}
             for (Spettacolo spettacolo : spettacoliGiorno) {
                 spettacolo.stampaDettagli();
             }
@@ -251,7 +263,7 @@ class StoricoSettimana {
             System.out.println("\nNumero settimana non valido. Deve essere compreso tra 1 e 52.\n");
             return false;
         }
-        List<String> giorniValidi = List.of("Lunedi", "Martedi", "Mercoledi", "Giovedi", "Venerdi", "Sabato", "Domenica");
+        List<String> giorniValidi = List.of("lun", "mar", "mer", "gio", "ven", "sab", "dom");
         if (!giorniValidi.contains(giorno)) {
             System.out.println("Giorno non valido: " + giorno);
             return false;
