@@ -35,6 +35,8 @@ public class GestorePrenotazioni{
             prenotazioni.effettuaPrenotazione(titanic, gestoreSale.getSala(titanic.getNumeroSala()).getPrenotabile());
             prenotazioni.effettuaPrenotazione(interstellar, gestoreSale.getSala(interstellar.getNumeroSala()).getPrenotabile());
             System.out.println();
+            
+            //Stampiamo tutti gli spettacoli relativi alla settimana da noi indicata
             storico.getStoricoAnnuo(storico.getAnnoCorrente()).getStoricoAnnuo().get(LocalDate.of(2024, 2, 15).get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear())).stampaSpettacoliSettimana();
             System.out.println("Prenotazioni effettuate:");
             for (Biglietto biglietto : prenotazioni.getPrenotazioni().values()) {
@@ -201,15 +203,16 @@ class StoricoSettimana {
     
     
     public void stampaSpettacoliSettimana() {
-        System.out.println("Spettacoli della settimana " + settimana + ":\n");
+        System.out.println("___________________________________________________");
+        System.out.println("|Spettacoli della settimana " + settimana + ":\n");
         for (Map.Entry<String, List<Spettacolo>> entry : storicoSettimanale.entrySet()) {
             String giorno = entry.getKey();
             List<Spettacolo> spettacoliGiorno = entry.getValue();
-
             System.out.println("Giorno: " + giorniCompleti.get(giorno));
-            if(spettacoliGiorno.isEmpty()){System.out.println("Non sono presenti spettacoli");}
+            if(spettacoliGiorno.isEmpty()){System.out.println("     Non sono presenti spettacoli");}
             for (Spettacolo spettacolo : spettacoliGiorno) {
                 spettacolo.stampaDettagli();
+                System.out.println();
             }
             System.out.println(); 
         }
@@ -328,13 +331,25 @@ class Spettacolo {
     
         return numeroSpettacolo;
     }
-
+    
+    public String getTipo(){
+        return this.tipo;
+    }
+    @Override
+    public String toString(){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        String formattedDatetime = this.datetime.format(formatter);
+        return "    ___________________________________________________\n" +
+                "   | Tipo: " + this.tipo + "\n" +
+                "   | Titolo: " + this.titolo + "\n" +
+                "   | Codice Spettacolo: " + this.codiceSpettacolo + "\n" +
+                "   | Numero Sala: " + Integer.toString(this.numeroSala) + "\n" +
+                "   | Data e ora dello spettacolo:  " + formattedDatetime + "\n" +
+                "   |__________________________________________________";
+    }
+   
     public void stampaDettagli() {
-        System.out.println(this.tipo);
-        System.out.println("Titolo: " + this.titolo);
-        System.out.println("Codice Spettacolo: " + this.codiceSpettacolo);
-        System.out.println("Numero Sala: " + this.numeroSala);
-        System.out.println("Data e Orario: " + this.datetime);
+        System.out.println(this.toString());
     }
 
 
@@ -650,12 +665,19 @@ class Biglietto {
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
         String formattedDatetime = this.datetime.format(formatter);
+        String postoFila = posto.getNumeroPosto() + "" + posto.getFila();
+        return "___________________________________________________\n" +
+        "| Biglietto                                        |\n|‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾|\n" +
+        "| Tipo: " + String.format("%-43s", spettacolo.getTipo()) + "|\n" +
+        "| Spettacolo: " + String.format("%-37s", spettacolo.getTitolo()) + "|\n" +
+        "| Codice Spettacolo: " + String.format("%-30s", spettacolo.getCodiceSpettacolo()) + "|\n" +
+        "| Data e ora prenotazione: " + String.format("%-24s", formattedDatetime) + "|\n" +
+        "| Numero Prenotazione: " + String.format("%-28s", numeroPrenotazione) + "|\n" +
+        "| Sala " + String.format("%-11s", spettacolo.getNumeroSala()) + "                                 |\n" +
+        "| Numero posto: " + String.format("%-35s",postoFila)+ "|\n" +
+        "| Data e ora dello spettacolo:  " + String.format("%-10s", spettacolo.getDatetime().format(formatter)) + "|\n" +
+        " ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾ ";
+          
 
-        return "Data e ora prenotazione: " + formattedDatetime +
-                "\nNumero Prenotazione: " + numeroPrenotazione +
-                "\nNumero posto: " + posto.getNumeroPosto() + posto.getFila() +
-                "\nSpettacolo: " + spettacolo.getTitolo() +
-                "\nCodice Spettacolo: " + spettacolo.getCodiceSpettacolo() +
-                "\nData e ora dello spettacolo: " + spettacolo.getDatetime().format(formatter);
     }
 }
