@@ -1,6 +1,8 @@
 import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,35 +18,291 @@ import java.util.LinkedHashMap;
 
 
 public class GestorePrenotazioni{
-        public static void main(String[] args) {
+    public static Scanner scanner = new Scanner(System.in);
+    public static Map<String, Utente> listaUtenti = new HashMap<>();
+    public static void main(String[] args) { 
+        Admin superAdmin = new Admin("Giovanni","Ardore" ,"giovanni98", "mypassword");
+        listaUtenti.put(superAdmin.getUsername(), superAdmin);
 
-            GestoreSale gestoreSale = GestoreSale.getInstance();
-            Storico storico = Storico.getInstance();
-            storico.creaStoricoAnnuo(storico.getAnnoCorrente());
-            Prenotazioni prenotazioni = Prenotazioni.getInstance();
-   
-            Sala sala1 = gestoreSale.creaSala(1);
-            Sala sala2 = gestoreSale.creaSala(2);
-            Sala sala3 = gestoreSale.creaSala(3);
-            System.out.println();
-            Spettacolo interstellar = storico.aggiungiNuovoSpettacolo("Interstellar", "film", "Fantascienza", sala1, 2024, 2, 14, 18, 30);
-            Spettacolo titanic = storico.aggiungiNuovoSpettacolo("Titanic", "film", "Azione", sala2, 2024, 2, 15, 20, 0);
-            Spettacolo il_padrino = storico.aggiungiNuovoSpettacolo("Il padrino", "film", "Musical", sala3, 2024, 2, 16, 15, 0);
-            System.out.println();
-            prenotazioni.effettuaPrenotazione(il_padrino, gestoreSale.getSala(il_padrino.getNumeroSala()).getPrenotabile());
-            prenotazioni.effettuaPrenotazione(titanic, gestoreSale.getSala(titanic.getNumeroSala()).getPrenotabile());
-            prenotazioni.effettuaPrenotazione(interstellar, gestoreSale.getSala(interstellar.getNumeroSala()).getPrenotabile());
-            System.out.println();
-            
-            //Stampiamo tutti gli spettacoli relativi alla settimana da noi indicata
-            storico.getStoricoAnnuo(storico.getAnnoCorrente()).getStoricoAnnuo().get(LocalDate.of(2024, 2, 15).get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear())).stampaSpettacoliSettimana();
-            System.out.println("Prenotazioni effettuate:");
-            for (Biglietto biglietto : prenotazioni.getPrenotazioni().values()) {
-                System.out.println("\n"+biglietto.toString()+"\n");
-                
-            }
+        while(true){
+            eseguiGestore();
         }
     }
+        public static void eseguiGestore() {
+            menu menu = new menu();
+            System.out.println("Benvenuto nel gestore prenotazioni\n\nVuoi loggarti come utente o come admin\nInserisci il numero e premi invio:\n1 - Entra come utente\n2 - Entra come admin");
+            String inputString = GestorePrenotazioni.scanner.nextLine();
+    
+            if ("1".equals(inputString)) {
+                menu.menuUser();
+            } else if ("2".equals(inputString)) {
+                menu.menuAdmin();
+            }
+            return;
+        }
+    }
+        
+
+    class menu{
+        public void menuUser(){
+                    User user = accessoUtente();
+                    if(user == null){
+                        System.out.println("Errore nel log-in");
+                        return;
+                    }
+                    System.out.println("Cosa vuoi fare:\n1 - Effettua prenotazione\n2 - Visualizza le prenotazioni attive\n3 - Elimina una prenotazione attiva");
+                    String scelta = GestorePrenotazioni.scanner.nextLine();
+                    switch (scelta) {
+                        case "1":
+                            System.out.println("Inserisci il codice spettacolo: ");
+                            String input = GestorePrenotazioni.scanner.nextLine();
+                            user.effettuaPrenotazione(input);
+                            break;
+                        case "2":
+                            List<Biglietto> prenotazioni = user.getPrenotazioni();
+                            for(Biglietto biglietto : prenotazioni){
+                                biglietto.stampaBiglietto();
+                            }
+                            break;
+                        case "3":
+                            System.out.println("Inserisci il codice della prenotazione che desideri eliminare");
+                            String codiceDaEliminare = GestorePrenotazioni.scanner.nextLine();
+                            user.cancellaPrenotazione(codiceDaEliminare);
+                            break;
+                        default:
+                            System.out.println("Scelta non valida");
+                            break;
+                    }
+                    
+                }
+        public void menuAdmin(){
+            Admin admin = accessoAdmin();
+            if(admin == null){
+                System.out.println("Errore nel log-in");
+                return;
+            }
+            else{
+                System.out.println("Cosa vuoi fare:\n1 - Inserisci utente\n2 - Aggiungi nuovo spettacolo");
+                String input = GestorePrenotazioni.scanner.nextLine();
+                if ("1".equals(input)) {
+                    admin.aggiungiUtente();
+                }else if("2".equals(input)){
+                    System.out.println("Inserisci un titolo");
+                    String titolo = GestorePrenotazioni.scanner.nextLine();
+                    System.out.println("Che tipo è:\n- Film\n-Concerto\n- Opera");
+                    String tipo = GestorePrenotazioni.scanner.nextLine();
+                    System.out.println("Di chi?");
+                    String dettaglio = GestorePrenotazioni.scanner.nextLine();
+                    System.out.println("Inserisci una data valida");
+                    String data = GestorePrenotazioni.scanner.nextLine();
+                    System.out.println("Inserisci un orario valido");
+                    String ora = GestorePrenotazioni.scanner.nextLine();
+                    Sala sala = GestoreSale.getInstance().getSala(1);
+                    
+                    int anno, mese, giorno, ore, minuti, settimana;
+                    try {
+                        String[] dataSplit = data.split("-");
+                        anno = Integer.parseInt(dataSplit[0]);
+                        mese = Integer.parseInt(dataSplit[1]);
+                        giorno = Integer.parseInt(dataSplit[2]);
+                        LocalDate localDate = LocalDate.of(anno, mese, giorno);
+                        WeekFields weekFields = WeekFields.of(Locale.getDefault());
+                        settimana = localDate.get(weekFields.weekOfWeekBasedYear());
+                        String[] oraSplit = ora.split(":");
+                        ore = Integer.parseInt(oraSplit[0]);
+                        minuti = Integer.parseInt(oraSplit[1]);
+                    } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                        System.out.println("Formato data o orario non valido. Assicurati di inserire i dati nel formato corretto.");
+                        return;
+                    }
+                    Storico.getInstance().aggiungiNuovoSpettacolo(titolo, tipo, dettaglio, sala, anno, mese, giorno, ore, minuti);
+                
+                }
+                else {
+                System.out.println("Scelta invalida");
+                }
+            }
+        }
+
+        private User accessoUtente(){
+            
+            System.out.println("Hai scelto di entrare come utente" + 
+                "\nInserisci il tuo nome utente:\n");
+                String inputNomeUtente = GestorePrenotazioni.scanner.nextLine();
+                if(controllaAccesso(inputNomeUtente) == true){  
+                    System.out.println("\n\nBenvenuto: " + inputNomeUtente + "\n");
+                    Utente utente = GestorePrenotazioni.listaUtenti.get(inputNomeUtente);
+                    User user = ((User)utente);
+                    return user;
+                }
+                else {
+                    return null;
+                }
+        }
+        
+        private Admin accessoAdmin(){
+            System.out.println("Hai scelto di entrare come admin" + 
+                                   "\nInserisci lo username:\n");
+                String inputNomeUtente = GestorePrenotazioni.scanner.nextLine();
+                if(controllaAccesso(inputNomeUtente) == true){  
+                    System.out.println("\n\nBenvenuto: " + inputNomeUtente + "\n");
+                    Utente utente = GestorePrenotazioni.listaUtenti.get(inputNomeUtente);
+                    Admin admin = ((Admin)utente);
+                    return admin;
+                }
+                else {
+                    return null;
+                }
+
+        } 
+
+        boolean controllaAccesso(String inputNomeUtente){
+            if(GestorePrenotazioni.listaUtenti.containsKey(inputNomeUtente)){
+                    System.out.println("Inserisci la password:");
+                    String passwd = GestorePrenotazioni.scanner.nextLine();
+                if(GestorePrenotazioni.listaUtenti.get(inputNomeUtente).getPassword().equals(passwd)){
+                    return true;
+                }else{
+                    System.out.println("Password errata");
+                    return false;
+                }
+            }
+            else{
+                System.out.println("Utente non esistente");
+                return false;
+            }
+        }        
+    }
+
+    class Utente {
+        protected String nome;
+        protected String cognome;
+        protected String username, password;
+    
+        public Utente(String nome, String cognome, String username, String password) {
+            this.nome = nome;
+            this.cognome = cognome;
+            this.username = username;
+            this.password = password;
+        }
+    
+        public String getNome() {
+            return nome;
+        }
+    
+        public String getPassword() {
+            return password;
+        }
+    
+        public String getCognome() {
+            return cognome;
+        }
+    
+        public String getUsername() {
+            return this.username;
+        }
+    
+        public void setPassword(String nuovaPassword) {
+            this.password = nuovaPassword;
+        }
+    }
+    
+    class User extends Utente {
+        private int numeroPrenotazioni;
+        private List<Biglietto> prenotazioniEffettuate;
+    
+        public User(String nome, String cognome, String username, String password) {
+            super(nome, cognome, username, password);
+            this.numeroPrenotazioni = 0;
+            this.prenotazioniEffettuate = new ArrayList<>();
+        }
+    
+        public int getNumeroPrenotazioni() {
+            return numeroPrenotazioni;
+        }
+    
+        public List<Biglietto> getPrenotazioni() {
+            return prenotazioniEffettuate;
+        }
+    
+        public void effettuaPrenotazione(String codiceSpettacolo) {
+            Storico storico = Storico.getInstance();
+            if(!Storico.listaIDSpettacoli.contains(codiceSpettacolo)){
+                System.out.println("Spettacolo non valido");
+                return;
+            }
+            Spettacolo spettacolo = storico.getSpettacolo(codiceSpettacolo);
+            Sala sala = GestoreSale.getInstance().getSala(spettacolo.getNumeroSala());
+            Biglietto biglietto = Prenotazioni.getInstance().effettuaPrenotazione(spettacolo, sala.getPrenotabile());
+            prenotazioniEffettuate.add(biglietto);
+            numeroPrenotazioni++;
+            System.out.println("Prenotazione effettuata con successo.");
+        }
+    
+        public void visualizzaPrenotazioni() {
+            System.out.println("Elenco delle prenotazioni di " + nome + " " + cognome + ":");
+            for (Biglietto biglietto : prenotazioniEffettuate) {
+                System.out.println(biglietto.toString());
+            }
+        }
+
+        public void cancellaPrenotazione(String numeroPrenotazione) {
+           for(Biglietto biglietto : prenotazioniEffettuate){
+                if(biglietto.getNumeroPrenotazione().equals(numeroPrenotazione)){
+                    numeroPrenotazioni --;
+                    biglietto.getPosto().setPrenotato(false);
+                    prenotazioniEffettuate.remove(numeroPrenotazioni);
+                    Prenotazioni.getInstance().getPrenotazioni().remove(numeroPrenotazione);
+                    System.out.println("Prenotazione cancellata con successo.");
+                    return;
+                }
+           System.out.println("Nessuna prenotazione trovata con il numero: " + numeroPrenotazione);
+        }
+    }
+}            
+            
+            
+        
+    
+    class Admin extends Utente {
+        public Admin(String nome, String cognome, String username, String password) {
+            super(nome, cognome, username, password);
+        }
+        public void aggiungiUtente() {
+            System.out.println("Che tipo di utente vuoi aggiungere: \n1 - User\n2 - Admin");
+            String inputString = GestorePrenotazioni.scanner.nextLine();
+            if ("1".equals(inputString)) {
+                System.out.println("Hai scelto di aggiungere un User");
+                Utente utente = scanParametri(inputString);
+                GestorePrenotazioni.listaUtenti.put(utente.username,utente);
+            } else if ("2".equals(inputString)) {
+                System.out.println("Hai scelto di aggiungere un Admin");
+                Utente utente = scanParametri(inputString);
+                GestorePrenotazioni.listaUtenti.put(utente.username,utente);
+
+            } else {
+                System.out.println("Scelta invalida");
+            }
+        }
+        Utente scanParametri(String inputString){
+            System.out.println("Inserisci il nome: ");
+                String nome = GestorePrenotazioni.scanner.nextLine();
+                System.out.println("\nInserisci il cognome: ");
+                String cognome = GestorePrenotazioni.scanner.nextLine();
+                System.out.println("\nInserisci lo username: ");
+                String username = GestorePrenotazioni.scanner.nextLine();
+                System.out.println("\nInserisci la password: ");
+                String password = GestorePrenotazioni.scanner.nextLine();
+                if ("1".equals(inputString)) {
+                    return new User(nome, cognome, username, password);
+                } else if ("2".equals(inputString)) {
+                    return new Admin(nome, cognome, username, password);
+                } else {
+                    return null;
+                }
+        }
+    }
+    
 
 class Storico{
     private static Storico instance;
@@ -609,7 +867,7 @@ class Prenotazioni{
         return numeroPrenotazione;
     }
 
-    public void effettuaPrenotazione(Spettacolo spettacolo, Posto posto) {
+    public Biglietto effettuaPrenotazione(Spettacolo spettacolo, Posto posto) {
         if (!posto.isPrenotato()) {
             String numeroPrenotazione = generaNumeroPrenotazione();
             Biglietto biglietto = Biglietto.creaBiglietto(spettacolo, posto,numeroPrenotazione);
@@ -617,8 +875,10 @@ class Prenotazioni{
             posto.setPrenotato(true);
             prenotazioni.put(numeroPrenotazione, biglietto);
             System.out.println("Prenotazione effettuata con successo con codice: "+ numeroPrenotazione);
+            return biglietto;
         } else {
             System.out.println("Il posto è già prenotato. Scegli un altro posto.");
+            return null;
         }
     }
 
@@ -660,6 +920,14 @@ class Biglietto {
 
     public void stampaBiglietto() {
         System.out.println( this.toString());
+    }
+
+    public String getNumeroPrenotazione(){
+        return this.numeroPrenotazione;
+    }
+
+    public Posto getPosto(){
+        return this.posto;
     }
     @Override
     public String toString() {
